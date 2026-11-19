@@ -28,6 +28,9 @@ add_subdirectory (python)
 add_subdirectory (register)
 add_subdirectory (report)
 add_subdirectory (ui)
+if(WITH_MCP)
+  add_subdirectory(mcp)
+endif()
 # gschemas directory goes last to ensure all schema files are installed
 # before glib-compile-schemas is called
 add_subdirectory (gschemas)
@@ -102,6 +105,10 @@ add_executable (gnucash
     ${gnucash_SOURCES}
     ${gnucash_noinst_HEADERS}
 )
+if(WITH_MCP)
+  target_link_libraries(gnucash gnc-live-mcp)
+  target_compile_definitions(gnucash PRIVATE WITH_MCP)
+endif()
 
 target_compile_definitions(gnucash PRIVATE -DG_LOG_DOMAIN=\"gnc.bin\")
 
@@ -272,6 +279,8 @@ install(FILES ${ENVIRONMENT_FILE_DIR}/environment DESTINATION
 
 
 set_local_dist(gnucash_DIST_local CMakeLists.txt environment.in generate-gnc-script
+    mcp/CMakeLists.txt mcp/gnc-mcp.hpp mcp/gnc-mcp-book.cpp
+    mcp/gnc-mcp-bridge.cpp mcp/gnc-mcp-csv.cpp mcp/gnc-mcp-private.hpp mcp/test-live-mcp.cpp
     gnucash.cpp gnucash-commands.cpp gnucash-cli.cpp gnucash-core-app.cpp
     gnucash-locale-macos.mm gnucash-locale-windows.c gnucash.rc.in
     gnucash-valgrind.in gnucash-manifest.rc gnucash-utf8.manifest

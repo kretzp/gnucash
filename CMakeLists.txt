@@ -66,6 +66,7 @@ option (WITH_AQBANKING "Build this project with aqbanking (online banking and a 
 option (WITH_GNUCASH "Build all of GnuCash, not just the library" ON)
 option (WITH_OFX "compile with ofx support (needs LibOFX)" ON)
 option (WITH_PYTHON "enable python plugin and bindings" OFF)
+option (WITH_MCP "Build the optional live-book MCP bridge (requires Boost 1.75+)" OFF)
 option (ENABLE_BINRELOC "compile with binary relocation support" ON)
 option (DISABLE_NLS "do not use Native Language Support" OFF)
 option (COVERAGE "Instrument a Debug or Asan build for coverage reporting" OFF)

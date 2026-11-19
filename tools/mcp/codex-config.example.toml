@@ -1,0 +1,8 @@
+# REVIEW TEMPLATE ONLY. Not loaded by Codex from this location.
+# After explicit approval, merge this block into C:/repos/gnucash/.codex/config.toml.
+[mcp_servers.gnucash_live]
+command = "C:\\repos\\gnucash\\.windows-build\\mcp-venv\\Scripts\\python.exe"
+args = ["C:\\repos\\gnucash\\tools\\mcp\\gnucash_mcp.py"]
+cwd = "C:\\repos\\gnucash"
+startup_timeout_sec = 20
+tool_timeout_sec = 30

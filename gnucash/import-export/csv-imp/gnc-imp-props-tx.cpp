@@ -709,6 +709,34 @@ static void trans_add_split (Transaction* trans, Account* account,
 
 }
 
+GncCsvTransactionData GncPreSplit::single_currency_data(Account* default_transfer) const
+{
+    if (!m_pre_trans || m_pre_trans->m_multi_split || !m_pre_trans->m_date || !m_account ||
+        !*m_account || (!m_amount && !m_amount_neg))
+        throw std::invalid_argument("MCP CSV import requires one complete transaction per row and an amount/account.");
+    auto account = *m_account;
+    auto transfer = m_taccount.value_or(default_transfer);
+    auto currency = xaccAccountGetCommodity(account);
+    if (!transfer || transfer == account || !gnc_commodity_is_currency(currency) ||
+        !gnc_commodity_equal(currency, xaccAccountGetCommodity(transfer)) ||
+        (m_pre_trans->m_currency && !gnc_commodity_equal(currency, m_pre_trans->m_currency)))
+        throw std::invalid_argument("A distinct transfer account in the same currency is required; supply default_transfer_account_guid if absent from the CSV.");
+    if (m_pre_trans->m_void_reason || (m_rec_state && *m_rec_state != NREC) ||
+        (m_trec_state && *m_trec_state != NREC) || m_rec_date || m_trec_date)
+        throw std::invalid_argument("MCP CSV import does not import void or reconciliation states.");
+    auto amount = m_amount.value_or(GncNumeric()) - m_amount_neg.value_or(GncNumeric());
+    if ((m_value || m_value_neg) && amount != m_value.value_or(GncNumeric()) - m_value_neg.value_or(GncNumeric()))
+        throw std::invalid_argument("Amount and value differ in a same-currency CSV row.");
+    if ((m_tamount || m_tamount_neg) && -amount != m_tamount.value_or(GncNumeric()) - m_tamount_neg.value_or(GncNumeric()))
+        throw std::invalid_argument("CSV transfer amount does not balance the source amount.");
+    if (m_price && *m_price != GncNumeric(1))
+        throw std::invalid_argument("Exchange rates are not supported by MCP CSV import.");
+    auto day = *m_pre_trans->m_date;
+    return {day.format("%Y-%m-%d"), m_pre_trans->m_desc.value_or(""), m_pre_trans->m_num.value_or(""),
+        m_pre_trans->m_notes.value_or(""), m_memo.value_or(""), m_tmemo.value_or(""),
+        m_action.value_or(""), m_taction.value_or(""), account, transfer, currency, amount};
+}
+
 void GncPreSplit::create_split (std::shared_ptr<DraftTransaction> draft_trans)
 {
     if (created)

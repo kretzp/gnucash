@@ -66,6 +66,8 @@ public:
     virtual ~GncTokenizer() = default;                      // destructor
 
     virtual void load_file(const std::string& path);
+    /** Load uploaded bytes without a temporary file; conversion uses the supplied encoding. */
+    void load_data(const std::string& contents, const std::string& encoding);
     const std::string& current_file();
     void encoding(const std::string& encoding);
     const std::string& encoding();

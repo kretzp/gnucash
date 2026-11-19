@@ -101,6 +101,13 @@ GncTokenizer::current_file()
     return m_imp_file_str;
 }
 
+void GncTokenizer::load_data(const std::string& contents, const std::string& charset)
+{
+    m_imp_file_str.clear();
+    m_raw_contents = contents;
+    encoding(charset);
+}
+
 void
 GncTokenizer::encoding(const std::string& encoding)
 {

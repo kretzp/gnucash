@@ -70,6 +70,11 @@
 #include <gnc-report.h>
 #include <gnc-locale-utils.hpp>
 #include <gnc-quotes.hpp>
+#ifdef WITH_MCP
+#include "gnc-mcp.hpp"
+#include "gnc-component-manager.h"
+#include "gnc-gui-query.h"
+#endif
 
 namespace bl = boost::locale;
 
@@ -131,6 +136,7 @@ extern SCM scm_init_sw_gnome_module(void);
 struct t_file_spec {
     int nofile;
     const char *file_to_load;
+    const char *mcp_file;
 };
 
 static void
@@ -216,7 +222,33 @@ scm_run_gnucash (void *data, [[maybe_unused]] int argc, [[maybe_unused]] char **
     gnc_main_window_show_all_windows();
 
     gnc_hook_run(HOOK_UI_POST_STARTUP, NULL);
+#ifdef WITH_MCP
+    std::unique_ptr<gnc::mcp::LiveBridge> mcp_bridge;
+    GFunc book_closed = +[](gpointer, gpointer data) {
+        static_cast<gnc::mcp::LiveBridge*>(data)->invalidate_book();
+    };
+    if (user_file_spec->mcp_file && *user_file_spec->mcp_file)
+    {
+        try
+        {
+            mcp_bridge = std::make_unique<gnc::mcp::LiveBridge>(user_file_spec->mcp_file, []() -> QofBook* {
+                return gnc_current_session_exist() ? qof_session_get_book(gnc_get_current_session()) : nullptr;
+            }, [](bool suspend) {
+                if (suspend) gnc_suspend_gui_refresh(); else gnc_resume_gui_refresh();
+            });
+            gnc_hook_add_dangler(HOOK_BOOK_CLOSED, book_closed, nullptr, mcp_bridge.get());
+        }
+        catch (const std::exception& error)
+        {
+            gnc_error_dialog(nullptr, "MCP bridge could not start: %s", error.what());
+        }
+    }
+#endif
     gnc_ui_start_event_loop();
+#ifdef WITH_MCP
+    if (mcp_bridge) gnc_hook_remove_dangler(HOOK_BOOK_CLOSED, book_closed);
+    mcp_bridge.reset();
+#endif
     gnc_hook_remove_dangler(HOOK_UI_SHUTDOWN, (GFunc)gnc_file_quit);
 
     gnc_shutdown(0);
@@ -236,6 +268,7 @@ namespace Gnucash {
         void configure_program_options (void);
 
         bool m_nofile = false;
+        std::string m_mcp_file;
     };
 
 }
@@ -261,6 +294,10 @@ Gnucash::Gnucash::configure_program_options (void)
     app_options.add_options()
     ("nofile", bpo::bool_switch (&m_nofile),
      _("Do not load the last file opened"));
+#ifdef WITH_MCP
+    app_options.add_options()("mcp-file", bpo::value(&m_mcp_file),
+        _("Enable the local live-book MCP bridge and create its private connection file"));
+#endif
 
     m_opt_desc_display->add (app_options);
     m_opt_desc_all.add (app_options);
@@ -279,7 +316,8 @@ Gnucash::Gnucash::start ([[maybe_unused]] int argc, [[maybe_unused]] char **argv
 
     auto user_file_spec = t_file_spec {
         m_nofile,
-        m_file_to_load ? m_file_to_load->c_str() : ""};
+        m_file_to_load ? m_file_to_load->c_str() : "",
+        m_mcp_file.c_str()};
     scm_boot_guile (argc, argv, scm_run_gnucash, &user_file_spec);
 
     return 0;

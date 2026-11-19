@@ -194,3 +194,11 @@ messages.mo
 /.settings/
 /build/
 *.LCK
+
+# Local development, client registration and accounting logs
+/.windows-build/
+/tools/gnucash-on-windows/
+/tools/mcp/__pycache__/
+/.codex/config.toml
+/AGENTS.md
+translog*

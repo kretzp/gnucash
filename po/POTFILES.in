@@ -377,6 +377,9 @@ gnucash/import-export/qif-imp/qif-parse.scm
 gnucash/import-export/qif-imp/qif-to-gnc.scm
 gnucash/import-export/qif-imp/qif-utils.scm
 gnucash/import-export/qif-imp/string.scm
+gnucash/mcp/gnc-mcp-book.cpp
+gnucash/mcp/gnc-mcp-bridge.cpp
+gnucash/mcp/gnc-mcp-csv.cpp
 gnucash/python/gncmod-python.c
 gnucash/python/init.py
 gnucash/python/pycons/console.py

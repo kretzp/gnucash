@@ -218,6 +218,16 @@ private:
     friend class GncPreSplit;
 };
 
+/** Parsed two-split data, without creating engine objects or invoking the matcher. */
+struct GncCsvTransactionData
+{
+    std::string date, description, number, notes, memo, transfer_memo, action, transfer_action;
+    Account* account;
+    Account* transfer_account;
+    gnc_commodity* currency;
+    gnc_numeric amount;
+};
+
 class GncPreSplit
 {
 public:
@@ -236,6 +246,7 @@ public:
     Account* get_account () { if (m_account) return *m_account; else return nullptr; }
     void set_account (Account* acct);
     ErrMap errors();
+    GncCsvTransactionData single_currency_data(Account* default_transfer = nullptr) const;
 
 private:
     void UpdateCrossSplitCounters ();
